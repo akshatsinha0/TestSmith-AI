@@ -7,10 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.responses import FileResponse
+from dotenv import load_dotenv
 
 from backend.parser import parse_any
 from backend.rag import build_kb, retrieve_context, persist_runtime_html, load_runtime_html, RUNTIME_HTML_PATH
 from backend.llm import LLMClient
+
+# Load environment variables from .env if present
+load_dotenv()
 
 app = FastAPI(title="TestSmith-AI API", version="0.1.0")
 # Serve static assets (sample checkout.html)
