@@ -1,0 +1,12 @@
+{
+  "POST /apply_coupon": {"code": "string"},
+  "POST /submit_order": {
+    "name": "string",
+    "email": "string",
+    "address": "string",
+    "shipping": "standard|express",
+    "payment": "card|paypal",
+    "items": [{"id": "string", "qty": "number"}],
+    "discount_code": "string|null"
+  }
+}

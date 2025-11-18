@@ -1,0 +1,6 @@
+UI/UX Guidelines - Checkout Page
+
+- All validation error messages must be displayed in red text.
+- The 'Pay Now' button should be green.
+- Cart totals must update immediately when quantities, shipping, or discount code change.
+- Labels should be visually associated with inputs.

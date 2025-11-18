@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E‑Shop Checkout</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .product { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    .cart { border: 2px dashed #888; padding: 10px; margin-top: 20px; }
+    .error { color: red; }
+    #pay-now { background: #2e7d32; color: white; padding: 10px 16px; border: none; cursor: pointer; }
+    #pay-now:disabled { background: #9e9e9e; }
+    .row { display: flex; gap: 10px; }
+    .row .col { flex: 1; }
+  </style>
+  <script>
+    const PRODUCTS = [
+      { id: 'p1', name: 'Widget A', price: 25.00 },
+      { id: 'p2', name: 'Widget B', price: 40.00 },
+      { id: 'p3', name: 'Widget C', price: 15.00 }
+    ];
+    const shippingCosts = { standard: 0, express: 10 };
+    function addToCart(id) {
+      const qtyInput = document.getElementById(`qty-${id}`);
+      qtyInput.value = Number(qtyInput.value || 0) + 1;
+      recalc();
+    }
+    function recalc() {
+      let subtotal = 0;
+      PRODUCTS.forEach(p => {
+        const q = Number(document.getElementById(`qty-${p.id}`).value || 0);
+        subtotal += q * p.price;
+      });
+      const ship = document.getElementById('ship-express').checked ? shippingCosts.express : shippingCosts.standard;
+      const code = document.getElementById('discount-code').value.trim();
+      let discount = 0;
+      if (code === 'SAVE15') discount = subtotal * 0.15;
+      const total = Math.max(0, subtotal - discount) + ship;
+      document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+      document.getElementById('discount').textContent = discount.toFixed(2);
+      document.getElementById('shipping').textContent = ship.toFixed(2);
+      document.getElementById('total').textContent = total.toFixed(2);
+    }
+    function validateEmail(email){
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+    function showError(id, msg){
+      document.getElementById(id).textContent = msg;
+    }
+    function clearErrors(){
+      ['name-error','email-error','address-error'].forEach(id => showError(id, ''));
+    }
+    function payNow(){
+      clearErrors();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const address = document.getElementById('address').value.trim();
+      let ok = true;
+      if (!name){ showError('name-error','Name is required'); ok=false; }
+      if (!email || !validateEmail(email)){ showError('email-error','Invalid email'); ok=false; }
+      if (!address){ showError('address-error','Address is required'); ok=false; }
+      if (ok){
+        document.getElementById('payment-status').textContent = 'Payment Successful!';
+        document.getElementById('payment-status').style.color = 'green';
+      } else {
+        document.getElementById('payment-status').textContent = '';
+      }
+    }
+    window.addEventListener('DOMContentLoaded', ()=>{
+      PRODUCTS.forEach(p => {
+        document.getElementById(`add-${p.id}`).addEventListener('click', ()=> addToCart(p.id));
+        document.getElementById(`qty-${p.id}`).addEventListener('input', recalc);
+      });
+      document.querySelectorAll('input[name="shipping"]').forEach(el=> el.addEventListener('change', recalc));
+      document.getElementById('discount-code').addEventListener('input', recalc);
+      document.getElementById('pay-now').addEventListener('click', payNow);
+      recalc();
+    });
+  </script>
+</head>
+<body>
+  <h1>E‑Shop Checkout</h1>
+
+  <div class="product" id="prod-p1">
+    <strong>Widget A</strong> — $25.00
+    <button id="add-p1">Add to Cart</button>
+    Qty: <input id="qty-p1" type="number" min="0" value="0" />
+  </div>
+  <div class="product" id="prod-p2">
+    <strong>Widget B</strong> — $40.00
+    <button id="add-p2">Add to Cart</button>
+    Qty: <input id="qty-p2" type="number" min="0" value="0" />
+  </div>
+  <div class="product" id="prod-p3">
+    <strong>Widget C</strong> — $15.00
+    <button id="add-p3">Add to Cart</button>
+    Qty: <input id="qty-p3" type="number" min="0" value="0" />
+  </div>
+
+  <div class="cart" id="cart">
+    <h2>Cart Summary</h2>
+    <p>Subtotal: $<span id="subtotal">0.00</span></p>
+    <p>Discount: $<span id="discount">0.00</span></p>
+    <p>Shipping: $<span id="shipping">0.00</span></p>
+    <p><strong>Total: $<span id="total">0.00</span></strong></p>
+
+    <div class="row">
+      <div class="col">
+        <label for="discount-code">Discount Code</label>
+        <input id="discount-code" type="text" placeholder="SAVE15" />
+      </div>
+      <div class="col">
+        <fieldset>
+          <legend>Shipping Method</legend>
+          <label><input type="radio" name="shipping" id="ship-standard" value="standard" checked /> Standard (Free)</label>
+          <label><input type="radio" name="shipping" id="ship-express" value="express" /> Express ($10)</label>
+        </fieldset>
+      </div>
+    </div>
+
+    <h3>User Details</h3>
+    <div class="row">
+      <div class="col">
+        <label for="name">Name</label>
+        <input id="name" type="text" />
+        <div id="name-error" class="error"></div>
+      </div>
+      <div class="col">
+        <label for="email">Email</label>
+        <input id="email" type="email" />
+        <div id="email-error" class="error"></div>
+      </div>
+    </div>
+    <div>
+      <label for="address">Address</label>
+      <input id="address" type="text" />
+      <div id="address-error" class="error"></div>
+    </div>
+
+    <h3>Payment Method</h3>
+    <label><input type="radio" name="payment" id="pay-card" value="card" checked /> Credit Card</label>
+    <label><input type="radio" name="payment" id="pay-paypal" value="paypal" /> PayPal</label>
+
+    <p id="payment-status"></p>
+    <button id="pay-now">Pay Now</button>
+  </div>
+</body>
+</html>
