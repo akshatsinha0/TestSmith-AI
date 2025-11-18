@@ -56,14 +56,19 @@ class LLMClient:
 
     def generate_selenium_script(self, test_case: Dict[str, Any], html: str, context_docs: List[Dict[str, Any]]) -> str:
         context = _format_context(context_docs)
+        test_url = os.getenv("CHECKOUT_URL", "http://127.0.0.1:8000/checkout")
         user = (
             f"checkout.html (full or partial):\n{html}\n\n" +
             f"Documentation context:\n{context}\n\n" +
             "Selected Test Case (JSON):\n" + json.dumps(test_case, indent=2) +
             "\n\nInstruction: Generate a full Python Selenium script implementing this test case on the given checkout page. "
-            "Include:\n- driver setup for Chrome using webdriver manager if known, else assume driver on PATH\n"
-            "- waits and validation assertions\n- comments explaining steps briefly\n"
-            "Ensure code is executable. Output ONLY code in one block."
+            f"Assume the page is served locally at: {test_url} (open it with driver.get).\n" 
+            "Strict requirements:\n"
+            "- Use webdriver_manager for Chrome: from webdriver_manager.chrome import ChromeDriverManager;\n"
+            "  from selenium.webdriver.chrome.service import Service; service = Service(ChromeDriverManager().install())\n"
+            "- Initialize driver with service; use WebDriverWait; prefer By.ID then CSS selectors matching the HTML.\n"
+            "- Add lightweight assertions for expected outcomes and inline comments.\n"
+            "Output ONLY a single Python code block, no extra text."
         )
         resp = self.client.chat.completions.create(
             model=self.model,

@@ -4,13 +4,17 @@ import json
 from typing import List, Optional
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.responses import FileResponse
 
 from backend.parser import parse_any
-from backend.rag import build_kb, retrieve_context, persist_runtime_html, load_runtime_html
+from backend.rag import build_kb, retrieve_context, persist_runtime_html, load_runtime_html, RUNTIME_HTML_PATH
 from backend.llm import LLMClient
 
 app = FastAPI(title="TestSmith-AI API", version="0.1.0")
+# Serve static assets (sample checkout.html)
+app.mount("/static", StaticFiles(directory="assets"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,6 +54,13 @@ class GenerateScriptResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/checkout")
+def serve_checkout():
+    # Serve uploaded runtime checkout if present, else fallback to bundled sample
+    path = RUNTIME_HTML_PATH if os.path.exists(RUNTIME_HTML_PATH) else os.path.join("assets", "checkout.html")
+    return FileResponse(path, media_type="text/html")
 
 
 @app.post("/build_kb", response_model=BuildKBResponse)

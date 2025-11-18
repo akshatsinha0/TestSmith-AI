@@ -54,6 +54,8 @@ streamlit run ui/app.py
 
 Open the UI at the URL Streamlit prints (typically http://localhost:8501).
 
+The API serves the checkout page at http://127.0.0.1:8000/checkout (uses your uploaded/pasted HTML if available; falls back to assets/checkout.html). Generated Selenium scripts will open this URL.
+
 ## 4) Usage
 1. Build Knowledge Base
    - Upload 3–5 support documents (e.g., `docs/product_specs.md`, `docs/ui_ux_guide.txt`, `docs/api_endpoints.json`).

@@ -47,6 +47,7 @@ with kb_tab:
             r.raise_for_status()
             out = r.json()
             st.success(f"Indexed {out['chunks_indexed']} chunks from sources: {', '.join(out['sources'])}")
+            st.markdown("[Open checkout page (served by API)](http://127.0.0.1:8000/checkout)")
         except Exception as e:
             st.error(str(e))
 
@@ -84,7 +85,15 @@ with sel_tab:
                 r = requests.post(f"{API_BASE}/generate_selenium_script", json={"test_case": tc}, timeout=180)
                 r.raise_for_status()
                 code = r.json().get("code", "")
+                st.session_state.generated_code = code
                 st.code(code, language="python")
+                if code:
+                    st.download_button(
+                        label="Download script",
+                        data=code,
+                        file_name=f"{tc.get('test_id','test_case')}.py",
+                        mime="text/x-python",
+                    )
         except Exception as e:
             st.error(str(e))
 
