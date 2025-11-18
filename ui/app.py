@@ -6,6 +6,27 @@ import streamlit as st
 API_BASE = st.secrets.get("api_base", "http://127.0.0.1:8000")
 
 st.set_page_config(page_title="TestSmith-AI", layout="wide")
+
+# Global typography: Elms Sans (Google Font)
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Elms+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+    html, body, [class*="css"], .stMarkdown, .stTextInput, .stButton, .stSelectbox {
+        font-family: "Elms Sans", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: "Elms Sans", sans-serif;
+        font-weight: 600;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("TestSmith-AI: Autonomous QA Agent")
 
 if "test_cases" not in st.session_state:
