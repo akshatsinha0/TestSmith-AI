@@ -37,6 +37,27 @@ def _format_context(context_docs: List[Dict[str, Any]]) -> str:
     return "\n\n".join(parts)
 
 
+def _strip_code_fences(text: str) -> str:
+    """Remove leading/trailing markdown code fences from an LLM response.
+
+    Handles patterns like ```python ... ``` or ``` ... ``` and returns
+    just the inner Python code.
+    """
+    if not text:
+        return ""
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        # Drop first line (``` or ```python)
+        first_nl = cleaned.find("\n")
+        if first_nl != -1:
+            cleaned = cleaned[first_nl + 1 :]
+        # Trim trailing fence
+        fence_idx = cleaned.rfind("```")
+        if fence_idx != -1:
+            cleaned = cleaned[:fence_idx]
+    return cleaned.strip()
+
+
 class LLMClient:
     def __init__(self) -> None:
         api_key = os.getenv("GROQ_API_KEY")
@@ -80,7 +101,8 @@ class LLMClient:
             "- Add assertions for: (a) field-level validation/messages where relevant, (b) the 'Payment Successful!' status, and\n"
             "  (c) the exact Total value based on business rules (checking the #total element text).\n"
             "- Include brief comments describing each major step.\n"
-            "Output ONLY a single Python code block, no extra text."
+            "- At the end of main flow, print a clear message like 'TEST PASSED: <short description>'.\n"
+            "Output ONLY a single Python code block, no extra text."\
         )
         resp = self.client.chat.completions.create(
             model=self.model,
@@ -88,4 +110,6 @@ class LLMClient:
             temperature=0.2,
             max_tokens=2200,
         )
-        return resp.choices[0].message.content.strip()
+        raw = resp.choices[0].message.content or ""
+        code = _strip_code_fences(raw)
+        return code.strip()
