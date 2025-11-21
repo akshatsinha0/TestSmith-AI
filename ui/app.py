@@ -3,7 +3,10 @@ import json
 import requests
 import streamlit as st
 
-API_BASE = st.secrets.get("api_base", "http://127.0.0.1:8000")
+try:
+    API_BASE = st.secrets.get("api_base", "http://127.0.0.1:8000")
+except FileNotFoundError:
+    API_BASE = "http://127.0.0.1:8000"
 
 st.set_page_config(page_title="TestSmith-AI", layout="wide")
 
