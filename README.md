@@ -4,8 +4,8 @@ An autonomous QA agent that builds a documentation-grounded "testing brain" to g
 
 - Backend: FastAPI
 - UI: Streamlit
-- Vector store: Chroma (local, persisted under `data/chroma`)
-- Embeddings: SentenceTransformers (`all-MiniLM-L6-v2`) — runs locally (CPU)
+- Vector store: lightweight lexical store (JSON under `data/kb_store.json`)
+- Retrieval: simple token-overlap RAG (no heavy ML dependencies)
 - LLM: Groq API (free-tier) — Llama 3.1 8B Instant by default
 
 ## 1) Prerequisites
@@ -31,7 +31,7 @@ pip install -r requirements.txt
 Set these before running the services:
 - GROQ_API_KEY: required (free). Create at: https://console.groq.com/keys
 - GROQ_MODEL: optional (default: `llama-3.1-8b-instant`)
-- EMBED_MODEL: optional (default: `sentence-transformers/all-MiniLM-L6-v2`)
+- EMBED_MODEL: (optional; currently not used since retrieval is lexical)
 
 Examples (PowerShell):
 ```powershell
@@ -103,7 +103,7 @@ Ensure Chrome is installed, and if needed, set up ChromeDriver on PATH or modify
 ## 8) Troubleshooting
 - Missing GROQ_API_KEY → set it and restart both services.
 - Embedding model download slow on first run → it’s cached afterwards under `.cache/`.
-- Vector store persistence → `data/chroma/` will be created automatically.
+- Knowledge base persistence → `data/kb_store.json` will be created automatically.
 
 ## 9) License
 MIT

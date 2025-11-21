@@ -1,25 +1,17 @@
 from __future__ import annotations
-import os
 from typing import List
-import numpy as np
 
-from sentence_transformers import SentenceTransformer
+# Lightweight, dependency-free stand-ins for embeddings to keep the interface
+# intact without requiring heavy ML frameworks on Python 3.13.
 
-_model = None
+def embed_texts(texts: List[str]) -> List[List[float]]:  # pragma: no cover
+    """Return trivial length-based embeddings.
 
-def get_embedder():
-    global _model
-    if _model is None:
-        model_name = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-        _model = SentenceTransformer(model_name)
-    return _model
-
-
-def embed_texts(texts: List[str]) -> List[List[float]]:
-    model = get_embedder()
-    vecs = model.encode(texts, normalize_embeddings=True).tolist()
-    return vecs
+    These are not used by the current vector store implementation, which relies
+    on lexical matching, but are kept for compatibility if imported elsewhere.
+    """
+    return [[float(len(t))] for t in texts]
 
 
-def embed_text(text: str) -> List[float]:
+def embed_text(text: str) -> List[float]:  # pragma: no cover
     return embed_texts([text])[0]
