@@ -22,6 +22,9 @@ SELENIUM_SYSTEM = (
     "You are a senior QA automation engineer. Generate a complete, runnable Python Selenium script. "
     "Use WebDriverWait and robust selectors based on the provided checkout.html. "
     "Do not invent non-existent elements. Use 'By.ID' where possible, else CSS selectors. "
+    "Compute the expected final Total amount for the scenario using the business rules in the context, and at the end of the test "
+    "assert that the value shown in the element with id 'total' (two decimal places) matches that expected amount. "
+    "Also assert that the payment status text (id 'payment-status') contains 'Payment Successful!'. "
     "Output ONLY a single Python code block."
 )
 
@@ -74,7 +77,9 @@ class LLMClient:
             "- Use webdriver_manager for Chrome: from webdriver_manager.chrome import ChromeDriverManager;\n"
             "  from selenium.webdriver.chrome.service import Service; service = Service(ChromeDriverManager().install())\n"
             "- Initialize driver with service; use WebDriverWait; prefer By.ID then CSS selectors matching the HTML.\n"
-            "- Add lightweight assertions for expected outcomes and inline comments.\n"
+            "- Add assertions for: (a) field-level validation/messages where relevant, (b) the 'Payment Successful!' status, and\n"
+            "  (c) the exact Total value based on business rules (checking the #total element text).\n"
+            "- Include brief comments describing each major step.\n"
             "Output ONLY a single Python code block, no extra text."
         )
         resp = self.client.chat.completions.create(
