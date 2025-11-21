@@ -1,0 +1,18 @@
+Validation Rules - E-Shop Checkout
+
+- Name field
+  - Required.
+  - Minimum length 2 characters.
+- Email field
+  - Required.
+  - Must be a syntactically valid email address.
+  - Invalid values must trigger an inline error message: "Invalid email".
+- Address field
+  - Required.
+  - Should contain at least 5 characters.
+- Discount code field
+  - Accepts alphanumeric codes.
+  - Unknown codes must not change the subtotal and may display an informational message.
+- General
+  - Error messages must be displayed in red text, near the offending field.
+  - Successful payment must display the message "Payment Successful!" in green.

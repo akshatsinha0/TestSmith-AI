@@ -1,5 +1,6 @@
 import io
 import json
+from collections import Counter
 import requests
 import streamlit as st
 
@@ -97,6 +98,21 @@ with tc_tab:
             st.error(str(e))
 
     if st.session_state.test_cases:
+        # Simple summary of how many positive / negative / boundary cases we have
+        type_counts = Counter()
+        for tc in st.session_state.test_cases:
+            scen = (tc.get("scenario") or tc.get("Test_Scenario") or "").lower()
+            if scen.startswith("[positive]"):
+                type_counts["Positive"] += 1
+            elif scen.startswith("[negative]"):
+                type_counts["Negative"] += 1
+            elif scen.startswith("[boundary]"):
+                type_counts["Boundary"] += 1
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Positive tests", type_counts.get("Positive", 0))
+        c2.metric("Negative tests", type_counts.get("Negative", 0))
+        c3.metric("Boundary tests", type_counts.get("Boundary", 0))
+
         st.markdown("### Select a test case")
         options = [f"{tc['test_id']} - {tc['feature']}" for tc in st.session_state.test_cases]
         idx = st.selectbox("Test case", options=list(range(len(options))), format_func=lambda i: options[i])
@@ -117,6 +133,50 @@ with tc_tab:
                         st.write(snippet)
                     else:
                         st.write("_Referenced by test case, but no snippet available from latest retrieval._")
+
+        # Coverage summary by source document
+        doc_counter = Counter()
+        for tc in st.session_state.test_cases:
+            for src in tc.get("grounded_in") or []:
+                doc_counter[src] += 1
+        if doc_counter:
+            st.markdown("#### Source coverage across generated tests")
+            for src, count in doc_counter.items():
+                st.write(f"- {src}: {count} test(s)")
+
+        # Download helpers
+        def _format_tc_markdown(tc: dict) -> str:
+            steps = tc.get("steps") or []
+            lines = [
+                f"### {tc.get('test_id', 'Test Case')} – {tc.get('feature', '')}",
+                f"**Scenario**: {tc.get('scenario', '')}",
+                "",
+                "**Steps:**",
+            ]
+            for i, step in enumerate(steps, start=1):
+                lines.append(f"{i}. {step}")
+            lines.append("")
+            lines.append(f"**Expected Result**: {tc.get('expected_result', '')}")
+            lines.append("")
+            grounded_str = ", ".join(tc.get("grounded_in") or [])
+            if grounded_str:
+                lines.append(f"**Grounded In**: {grounded_str}")
+            return "\n".join(lines)
+
+        st.markdown("#### Export test plan")
+        md_plan = _format_tc_markdown(selected_tc)
+        st.download_button(
+            label="Download selected test case (Markdown)",
+            data=md_plan,
+            file_name=f"{selected_tc.get('test_id','test_case')}.md",
+            mime="text/markdown",
+        )
+        st.download_button(
+            label="Download full test suite (JSON)",
+            data=json.dumps(st.session_state.test_cases, indent=2),
+            file_name="test_suite.json",
+            mime="application/json",
+        )
 
 with sel_tab:
     st.subheader("Generate Selenium Script")
