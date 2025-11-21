@@ -39,6 +39,21 @@ $env:GROQ_API_KEY = "{{GROQ_API_KEY}}"  # replace with your key
 $env:GROQ_MODEL = "llama-3.1-8b-instant"
 ```
 
+### Note on vector DB vs lexical store
+Originally the project used a true vector database (Chroma + SentenceTransformers embeddings) for semantic retrieval.
+On Python 3.13 and Windows this caused dependency conflicts and build issues:
+- `chromadb` required `numpy<2.0.0`, while other libraries (e.g. Streamlit) required `numpy>=2`.
+- Some ML packages had no prebuilt wheels for Python 3.13, triggering Visual Studio build tool errors.
+
+To keep the assignment easy to run and focus on the agent/RAG behaviour, the implementation now uses a
+lightweight lexical store backed by `data/kb_store.json`:
+- Documents are chunked and stored with metadata (`source_document`).
+- Retrieval ranks chunks by token overlap with the user query.
+- Retrieved chunks are passed into the LLM as context (RAG), and are surfaced in the UI as grounding snippets.
+
+The design is intentionally layered: `backend.vector_store` can later be swapped for Chroma/FAISS/Qdrant without
+changing the rest of the pipeline if you want a full vector DB in a more permissive environment.
+
 ## 3) Run
 In two terminals (both with venv activated):
 
