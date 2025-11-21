@@ -36,6 +36,7 @@ class BuildKBResponse(BaseModel):
 class GenerateTestCasesRequest(BaseModel):
     query: str
 
+
 class TestCase(BaseModel):
     test_id: str
     feature: str
@@ -44,9 +45,16 @@ class TestCase(BaseModel):
     expected_result: str
     grounded_in: List[str]
 
+
+class ContextSnippet(BaseModel):
+    source_document: str
+    preview: str
+
+
 class GenerateTestCasesResponse(BaseModel):
     test_cases: List[TestCase]
     raw: str
+    context_preview: List[ContextSnippet]
 
 class GenerateScriptRequest(BaseModel):
     test_case: TestCase
@@ -111,6 +119,18 @@ async def generate_test_cases(req: GenerateTestCasesRequest):
     llm = LLMClient()
     raw = llm.generate_test_cases(query=query, context_docs=retrieved)
 
+    # Prepare lightweight context previews for UI grounding panel
+    context_preview: List[ContextSnippet] = []
+    for d in retrieved:
+        meta = (d.get("metadata") or {})
+        src = meta.get("source_document") or "unknown"
+        text = (d.get("text") or "").strip().replace("\n", " ")
+        if not text:
+            continue
+        if len(text) > 260:
+            text = text[:260] + "..."
+        context_preview.append(ContextSnippet(source_document=src, preview=text))
+
     # Try to parse into structured items
     test_cases: List[TestCase] = []
     try:
@@ -132,7 +152,7 @@ async def generate_test_cases(req: GenerateTestCasesRequest):
         # If not JSON, return raw and empty list
         pass
 
-    return GenerateTestCasesResponse(test_cases=test_cases, raw=raw)
+    return GenerateTestCasesResponse(test_cases=test_cases, raw=raw, context_preview=context_preview)
 
 
 @app.post("/generate_selenium_script", response_model=GenerateScriptResponse)

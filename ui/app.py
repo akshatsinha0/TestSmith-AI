@@ -35,6 +35,8 @@ except FileNotFoundError:
 
 if "test_cases" not in st.session_state:
     st.session_state.test_cases = []
+if "context_preview" not in st.session_state:
+    st.session_state.context_preview = []
 
 with st.sidebar:
     st.markdown("## Backend")
@@ -68,9 +70,10 @@ with kb_tab:
         if checkout_html_text and not checkout_html:
             data["checkout_html_text"] = checkout_html_text
         try:
-            r = requests.post(f"{API_BASE}/build_kb", files=files, data=data, timeout=120)
-            r.raise_for_status()
-            out = r.json()
+            with st.spinner("Building knowledge base from uploaded documents..."):
+                r = requests.post(f"{API_BASE}/build_kb", files=files, data=data, timeout=120)
+                r.raise_for_status()
+                out = r.json()
             st.success(f"Indexed {out['chunks_indexed']} chunks from sources: {', '.join(out['sources'])}")
             st.markdown("[Open checkout page (served by API)](http://127.0.0.1:8000/checkout)")
         except Exception as e:
@@ -81,10 +84,12 @@ with tc_tab:
     query = st.text_input("Instruction", value="Generate all positive and negative test cases for the discount code feature.")
     if st.button("Generate Test Cases", type="primary"):
         try:
-            r = requests.post(f"{API_BASE}/generate_test_cases", json={"query": query}, timeout=120)
-            r.raise_for_status()
-            out = r.json()
+            with st.spinner("Generating test cases with RAG agent..."):
+                r = requests.post(f"{API_BASE}/generate_test_cases", json={"query": query}, timeout=120)
+                r.raise_for_status()
+                out = r.json()
             st.session_state.test_cases = out.get("test_cases", [])
+            st.session_state.context_preview = out.get("context_preview", [])
             st.code(out.get("raw", ""), language="json")
             if st.session_state.test_cases:
                 st.success(f"Parsed {len(st.session_state.test_cases)} structured test cases.")
@@ -96,7 +101,22 @@ with tc_tab:
         options = [f"{tc['test_id']} - {tc['feature']}" for tc in st.session_state.test_cases]
         idx = st.selectbox("Test case", options=list(range(len(options))), format_func=lambda i: options[i])
         st.session_state.selected_tc = st.session_state.test_cases[idx]
-        st.json(st.session_state.selected_tc)
+        selected_tc = st.session_state.selected_tc
+        st.json(selected_tc)
+
+        # Grounding panel: show which docs/snippets back this test case
+        preview_by_src = {c["source_document"]: c["preview"] for c in st.session_state.get("context_preview", [])}
+        grounded = selected_tc.get("grounded_in") or []
+        if grounded:
+            st.markdown("#### Grounding (documentation snippets)")
+            for src in grounded:
+                snippet = preview_by_src.get(src)
+                label = f"Source: {src}"
+                with st.expander(label, expanded=False):
+                    if snippet:
+                        st.write(snippet)
+                    else:
+                        st.write("_Referenced by test case, but no snippet available from latest retrieval._")
 
 with sel_tab:
     st.subheader("Generate Selenium Script")
@@ -107,9 +127,10 @@ with sel_tab:
             if not tc:
                 st.warning("No test case selected.")
             else:
-                r = requests.post(f"{API_BASE}/generate_selenium_script", json={"test_case": tc}, timeout=180)
-                r.raise_for_status()
-                code = r.json().get("code", "")
+                with st.spinner("Generating Selenium script from selected test case..."):
+                    r = requests.post(f"{API_BASE}/generate_selenium_script", json={"test_case": tc}, timeout=180)
+                    r.raise_for_status()
+                    code = r.json().get("code", "")
                 st.session_state.generated_code = code
                 st.code(code, language="python")
                 if code:
