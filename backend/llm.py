@@ -100,6 +100,7 @@ class LLMClient:
             "- Initialize driver with service; use WebDriverWait; prefer By.ID then CSS selectors matching the HTML.\n"
             "- Add assertions for: (a) field-level validation/messages where relevant, (b) the 'Payment Successful!' status, and\n"
             "  (c) the exact Total value based on business rules (checking the #total element text).\n"
+            "- Immediately before asserting on the total, print: DEBUG total_text = <raw_text_of_#total>.\n"
             "- Include brief comments describing each major step.\n"
             "- At the end of main flow, print a clear message like 'TEST PASSED: <short description>'.\n"
             "Output ONLY a single Python code block, no extra text."\
