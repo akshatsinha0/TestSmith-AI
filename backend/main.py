@@ -133,8 +133,29 @@ async def generate_test_cases(req: GenerateTestCasesRequest):
 
     # Try to parse into structured items
     test_cases: List[TestCase] = []
+
+    def _extract_json_array(text: str) -> str:
+        """Best-effort extraction of a JSON array from an LLM response.
+
+        Strips code fences and any leading/trailing commentary, then
+        returns the substring from the first '[' to the last ']'.
+        """
+        if not text:
+            return ""
+        cleaned = text.strip()
+        # Remove ```json or ``` fences if present
+        if cleaned.startswith("```"):
+            cleaned = cleaned.strip("`")
+            # After stripping backticks, try to find first '['
+        start = cleaned.find("[")
+        end = cleaned.rfind("]")
+        if start == -1 or end == -1 or end <= start:
+            return cleaned
+        return cleaned[start : end + 1]
+
     try:
-        data = json.loads(raw)
+        payload = _extract_json_array(raw)
+        data = json.loads(payload)
         for i, item in enumerate(data):
             tc = TestCase(
                 test_id=item.get("Test_ID") or item.get("id") or f"TC-{i+1:03d}",

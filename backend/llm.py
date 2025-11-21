@@ -7,8 +7,14 @@ from groq import Groq
 
 
 TESTCASE_SYSTEM = (
-    "You are a QA test planner. Generate ONLY JSON (a list of objects). Each object must include keys: "
-    "Test_ID, Feature, Test_Scenario, Steps (array), Expected_Result, Grounded_In (array of source document names). "
+    "You are a QA test planner. Respond with ONLY a JSON array (no markdown, no code fences). "
+    "Each array element MUST be an object with exactly these keys: "
+    "Test_ID, Feature, Test_Scenario, Steps, Expected_Result, Grounded_In. "
+    "Conventions: "
+    "- Test_ID: use a readable pattern like 'TC-DISCOUNT-POS-001', 'TC-DISCOUNT-NEG-002', 'TC-DISCOUNT-BOUND-003'. "
+    "- Test_Scenario: begin with one of '[Positive]', '[Negative]', '[Boundary]' followed by a short scenario sentence. "
+    "- Steps: an ordered list of clear single-sentence steps. "
+    "- Grounded_In: list of source document names used (e.g., ['product_specs.md']). "
     "Base all details strictly on the provided context. If a fact is not in context, do not invent it."
 )
 
@@ -42,9 +48,10 @@ class LLMClient:
         context = _format_context(context_docs)
         user = (
             "Context (documentation excerpts):\n" + context +
-            "\n\nInstruction: Based on the above context, "
-            "generate positive and negative test cases for: '" + query + "'. "
-            "Return a JSON array only."
+            "\n\nInstruction: Based on the above context, generate a small suite of test cases for: '"
+            + query
+            + "'. Include a mix of positive, negative, and boundary cases where applicable. "
+            "Remember: output MUST be a raw JSON array of objects conforming to the schema."
         )
         resp = self.client.chat.completions.create(
             model=self.model,
