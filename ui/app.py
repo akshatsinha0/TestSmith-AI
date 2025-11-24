@@ -3,6 +3,41 @@ import json
 from collections import Counter
 import requests
 import streamlit as st
+import threading
+import time
+
+# ---- Option A: ensure FastAPI is running locally (for Streamlit Cloud single-app deploy)
+_BACKEND_STARTED = False
+
+def _ensure_backend_running():
+    global _BACKEND_STARTED
+    # If a backend is already reachable, don't start another one
+    try:
+        r = requests.get("http://127.0.0.1:8000/health", timeout=0.5)
+        if r.ok:
+            _BACKEND_STARTED = True
+            # Backend already up (local dev or prior thread)
+            pass
+        else:
+            raise RuntimeError("health not ok")
+    except Exception:
+        if not _BACKEND_STARTED:
+            try:
+                from backend.main import app as fastapi_app  # local import to avoid heavy import cost if not needed
+                import uvicorn
+                def _run():
+                    uvicorn.run(fastapi_app, host="127.0.0.1", port=8000, log_level="warning")
+                t = threading.Thread(target=_run, daemon=True)
+                t.start()
+                # tiny wait so server can bind before first request
+                time.sleep(0.6)
+                _BACKEND_STARTED = True
+            except Exception as e:
+                # Avoid st.* before set_page_config; print to server logs instead
+                print(f"[startup] Failed to start embedded FastAPI: {e}")
+
+_ensure_backend_running()
+# ---- end ensure backend
 
 st.set_page_config(page_title="TestSmith-AI", layout="wide")
 

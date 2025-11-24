@@ -71,6 +71,8 @@ Open the UI at the URL Streamlit prints (typically http://localhost:8501).
 
 The API serves the checkout page at http://127.0.0.1:8000/checkout (uses your uploaded/pasted HTML if available; falls back to assets/checkout.html). Generated Selenium scripts will open this URL.
 
+Live demo (Streamlit Cloud): https://testsmith-ai.streamlit.app/
+
 ## 4) Usage
 1. Build Knowledge Base
    - Upload 3–5 support documents (e.g., `docs/product_specs.md`, `docs/ui_ux_guide.txt`, `docs/api_endpoints.json`).
@@ -122,3 +124,41 @@ Ensure Chrome is installed, and if needed, set up ChromeDriver on PATH or modify
 
 ## 9) License
 MIT
+
+## 10) Deploying to Streamlit Cloud
+You can deploy this repo directly to Streamlit Cloud.
+
+### Option A (single app on Streamlit Cloud — recommended for demo)
+Streamlit Cloud runs a single process per app; the UI starts the FastAPI backend inside the same process on port 8000.
+
+1. App file: choose `ui/app.py`.
+2. Secrets: open App → Settings → Secrets and paste valid TOML:
+
+```
+GROQ_API_KEY = "<your_groq_key>"
+GROQ_MODEL  = "llama-3.1-8b-instant"
+api_base    = "http://127.0.0.1:8000"
+CHECKOUT_URL = "http://127.0.0.1:8000/checkout"
+```
+
+3. Deploy. Use the sidebar Health Check first; it should return `{ "status": "ok" }`.
+
+Notes:
+- Storage is ephemeral; `data/kb_store.json` will be recreated on restarts.
+- Generated Selenium scripts will reference `CHECKOUT_URL`; with Option A they target the in-app `/checkout`.
+
+### Option B (two services: public FastAPI + Streamlit Cloud UI)
+If you want scripts to run against a publicly reachable page, deploy the FastAPI to a host (Render, Railway, Fly.io, EC2, etc.):
+
+- Start command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+- Ensure your platform exposes the port and sets `PORT`.
+- After deployment, set Streamlit Cloud Secrets:
+
+```
+GROQ_API_KEY = "<your_groq_key>"
+GROQ_MODEL  = "llama-3.1-8b-instant"
+api_base    = "https://<your-fastapi-host>"
+CHECKOUT_URL = "https://<your-fastapi-host>/checkout"
+```
+
+That gives you a public `/checkout` URL and a public API base; Streamlit UI will call the public API, and generated Selenium scripts will open the public checkout page.
